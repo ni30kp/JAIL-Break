@@ -1,0 +1,166 @@
+{
+  "test_questions": [
+    {
+      "id": 1,
+      "category": "Policy + Supervision",
+      "question": "What supervision procedures apply if Robert's family business creates a conflict of interest with supervision staff?"
+    },
+    {
+      "id": 2,
+      "category": "Policy + Supervision", 
+      "question": "If Nathan works off-hours at an unapproved job site, which standards govern reporting and documentation?"
+    },
+    {
+      "id": 3,
+      "category": "Policy + Supervision",
+      "question": "How should staff handle a situation where Robert misses weekly supervision meetings due to caregiving responsibilities?"
+    },
+    {
+      "id": 4,
+      "category": "Policy + Supervision",
+      "question": "If Nathan participates in religious activities outside normal hours, how is this supervised under current standards?"
+    },
+    {
+      "id": 5,
+      "category": "Policy + Supervision",
+      "question": "What policies determine staff behavior if they observe Nathan socializing with prohibited peers in public?"
+    },
+    {
+      "id": 6,
+      "category": "Fees + Incentives",
+      "question": "How should Nathan's financial hardship be considered when calculating eligibility for privilege passes?"
+    },
+    {
+      "id": 7,
+      "category": "Fees + Incentives",
+      "question": "If Robert fails to make fee payments for three consecutive weeks, what policies apply to his supervision status?"
+    },
+    {
+      "id": 8,
+      "category": "Fees + Incentives",
+      "question": "If Nathan's employment income is irregular, how should this be reflected in his financial obligations tracking?"
+    },
+    {
+      "id": 9,
+      "category": "Fees + Incentives",
+      "question": "Could failure to pay fees automatically trigger disciplinary action for Robert?"
+    },
+    {
+      "id": 10,
+      "category": "Fees + Incentives",
+      "question": "What policy governs how fee exemptions are reviewed and approved?"
+    },
+    {
+      "id": 11,
+      "category": "Monitoring / Technology",
+      "question": "If Nathan's ankle monitor repeatedly fails to charge, what policies about maintenance and compliance apply?"
+    },
+    {
+      "id": 12,
+      "category": "Monitoring / Technology",
+      "question": "If a GPS tracking report shows inconsistent location data for Robert, what investigation steps are required?"
+    },
+    {
+      "id": 13,
+      "category": "Monitoring / Technology",
+      "question": "If Nathan's electronic monitoring device logs show tampering alerts, what reporting process must staff follow?"
+    },
+    {
+      "id": 14,
+      "category": "Monitoring / Technology",
+      "question": "What evidence preservation policies apply to telemetry data from malfunctioning ankle monitors?"
+    },
+    {
+      "id": 15,
+      "category": "Monitoring / Technology",
+      "question": "How should repeated technical failures in Robert's home monitoring equipment be escalated?"
+    },
+    {
+      "id": 16,
+      "category": "Grievance + Appeals",
+      "question": "If Nathan believes a staff member is biased in reporting his progress, what grievance steps should he follow?"
+    },
+    {
+      "id": 17,
+      "category": "Grievance + Appeals",
+      "question": "What is the timeline for Robert to escalate an unresolved grievance to the Advisory Board?"
+    },
+    {
+      "id": 18,
+      "category": "Grievance + Appeals",
+      "question": "Under what circumstances can Nathan request a third-party review of his grievance?"
+    },
+    {
+      "id": 19,
+      "category": "Grievance + Appeals",
+      "question": "What is the correct process if Robert wants legal counsel involved in his grievance?"
+    },
+    {
+      "id": 20,
+      "category": "Grievance + Appeals",
+      "question": "If Nathan submits a late grievance, what policies govern whether it is accepted?"
+    },
+    {
+      "id": 21,
+      "category": "Case Management + Individualization",
+      "question": "How should case managers handle conflicts between Nathan's business schedule and required check-ins?"
+    },
+    {
+      "id": 22,
+      "category": "Case Management + Individualization",
+      "question": "If Robert's son's employment raises concerns about supervision objectivity, what adjustments should be made?"
+    },
+    {
+      "id": 23,
+      "category": "Case Management + Individualization",
+      "question": "How can staff adjust Robert's programming if his caregiving duties interfere with standard schedules?"
+    },
+    {
+      "id": 24,
+      "category": "Case Management + Individualization",
+      "question": "What standards guide decisions about exempting Nathan from certain community activities for medical reasons?"
+    },
+    {
+      "id": 25,
+      "category": "Case Management + Individualization",
+      "question": "If Nathan successfully completes key program phases but has outstanding fees, what incentives can still be offered?"
+    },
+    {
+      "id": 26,
+      "category": "Principles of Effective Intervention",
+      "question": "How does the Responsivity Principle guide staff handling of Nathan's inconsistent attendance?"
+    },
+    {
+      "id": 27,
+      "category": "Principles of Effective Intervention",
+      "question": "In what ways can Robert's family dynamics be integrated into his supervision plan under effective intervention principles?"
+    },
+    {
+      "id": 28,
+      "category": "Principles of Effective Intervention",
+      "question": "How does the Need Principle apply when selecting additional programming for Nathan?"
+    },
+    {
+      "id": 29,
+      "category": "Principles of Effective Intervention",
+      "question": "If Robert shows improvements in pro-social behavior, how should this affect supervision intensity?"
+    },
+    {
+      "id": 30,
+      "category": "Principles of Effective Intervention",
+      "question": "What principles apply if Nathan has declining mental health affecting compliance?"
+    }
+  ],
+  "metadata": {
+    "total_questions": 30,
+    "categories": [
+      "Policy + Supervision",
+      "Fees + Incentives", 
+      "Monitoring / Technology",
+      "Grievance + Appeals",
+      "Case Management + Individualization",
+      "Principles of Effective Intervention"
+    ],
+    "description": "Comprehensive test suite for multi-hop RAG system covering all major policy areas in the Community Corrections dataset"
+  }
+} 
