@@ -712,6 +712,7 @@ app.post("/api/upload", upload.array("files", 10), async (req, res) => {
         size: file.size,
         mimeType: file.mimetype,
         upload_date: new Date().toISOString(),
+        source: filePath, // Add source path for proper document tracking
       };
 
       // Upload to RAG system
