@@ -329,7 +329,7 @@ ${contextText}
 
 IMPORTANT: Generate follow-up questions that are SPECIFIC and TARGETED to find missing information. Focus on:
 
-1. **EXPLICIT POLICY NUMBERS**: Look for any policy numbers mentioned (CD-150, CD-160, CS-043, CD-100, etc.) and ask for more details about them.
+1. **SPECIFIC REFERENCES**: Look for any specific references, numbers, or identifiers mentioned in the documents and ask for more details about them.
 
 2. **SPECIFIC PROCEDURES**: Ask for detailed procedures related to the question topic.
 
@@ -346,9 +346,9 @@ IMPORTANT: Generate follow-up questions that are SPECIFIC and TARGETED to find m
 8. **SPECIFIC EXAMPLES**: Ask for concrete examples or case studies related to the situation.
 
 Make your questions SPECIFIC and DIRECT. Examples:
-- "What does policy CD-150 specifically say about financial obligations?"
-- "What are the exact procedures for handling ankle monitor failures?"
-- "What specific consequences are outlined for non-compliance with fee requirements?"
+- "What specific requirements or qualifications are mentioned in the documents?"
+- "What are the exact procedures or steps outlined for this process?"
+- "What specific consequences or outcomes are described in the documents?"
 
 Format your response as a JSON array of strings.
 
@@ -393,31 +393,31 @@ Follow-up Questions:
       .join("\n\n---\n\n");
 
     const finalPrompt = `
-You are an expert assistant helping Community Corrections staff apply Colorado Community Corrections Standards, Program Guidelines, and client transcripts.
+You are an intelligent assistant that analyzes documents and provides comprehensive answers based on the uploaded content.
 
-IMPORTANT: Follow this exact structure when answering:
+IMPORTANT: Follow this structure when answering:
 
-1. **FIRST**: Explicitly identify the correct Standard(s) or Guideline(s) that apply to this situation. Look for specific policy numbers mentioned in the context (CD-150, CD-160, CS-043, CD-100, etc.) and cite them properly.
+1. **FIRST**: Identify the most relevant information from the uploaded documents that directly addresses the question.
 
-2. **SECOND**: Bring in relevant client transcript information to provide specific context about the client's situation, if applicable.
+2. **SECOND**: If applicable, provide specific context, examples, or details found in the documents.
 
-3. **THIRD**: If applicable, mention how this situation impacts incentives, eligibility, supervision decisions, or other relevant consequences.
+3. **THIRD**: Explain how the information relates to the question and any implications or conclusions.
 
-4. **FOURTH**: Only if the situation warrants it, mention the grievance process or other appropriate next steps.
+4. **FOURTH**: If there are limitations or missing information, clearly state what additional details would be helpful.
 
-Adapt your response to the specific topic:
-- For financial/fee questions: Focus on CD-150, CD-160, financial obligations, incentives
-- For treatment/program questions: Focus on CD-100, treatment standards, program requirements
-- For grievance questions: Focus on grievance procedures, appeal rights, timelines
-- For supervision questions: Focus on supervision standards, monitoring requirements
-- For any other topic: Focus on relevant policies, procedures, and consequences
+Guidelines for your response:
+- Base your answer strictly on the provided document content
+- Cite specific details, sections, or information from the documents
+- Be objective and factual
+- If the documents don't contain sufficient information to fully answer the question, be honest about the limitations
+- Structure your response clearly and logically
 
 Question: "${question}"
 
-Context Information:
+Context Information from uploaded documents:
 ${contextText}
 
-Provide a comprehensive answer that directly addresses the question using the information above. Be specific about policy numbers, procedures, and consequences.`;
+Provide a comprehensive answer that directly addresses the question using the information above. Be specific about the sources and details found in the documents.`;
 
     try {
       const { result, provider } = await this.invokeWithFallback({
