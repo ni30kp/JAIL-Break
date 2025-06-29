@@ -149,10 +149,15 @@
       "id": 30,
       "category": "Principles of Effective Intervention",
       "question": "What principles apply if Nathan has declining mental health affecting compliance?"
+    },
+    {
+      "id": 31,
+      "category": "Case Management + Individualization",
+      "question": "What is the full address of Greenwood Counseling Associates, and on which two different dates did Nathan have appointments there?"
     }
   ],
   "metadata": {
-    "total_questions": 30,
+    "total_questions": 31,
     "categories": [
       "Policy + Supervision",
       "Fees + Incentives", 
