@@ -59,7 +59,6 @@ async function runEvaluation(ragService) {
 
   for (const qa_pair of qa_dataset) {
     const { question } = qa_pair;
-    console.log(`Evaluating question: ${question}`);
     try {
       const result = await ragService.query(question);
       const answer = result.answer;
