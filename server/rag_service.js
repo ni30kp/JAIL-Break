@@ -4,7 +4,7 @@ const { HNSWLib } = require("@langchain/community/vectorstores/hnswlib");
 const { RecursiveCharacterTextSplitter } = require("@langchain/textsplitters");
 const { EnsembleRetriever } = require("langchain/retrievers/ensemble");
 const { PromptTemplate } = require("@langchain/core/prompts");
-const { LLMChain } = require("@langchain/core/chains");
+// const { LLMChain } = require("@langchain/core/chains"); // Removed - deprecated import
 const fs = require("fs");
 const path = require("path");
 
@@ -494,10 +494,11 @@ Answer:`;
       inputVariables: ["input"],
     });
 
-    return new LLMChain({
-      llm,
-      prompt,
-    });
+    // Use the updated approach without LLMChain
+    const { RunnableSequence } = require("@langchain/core/runnables");
+    const { StringOutputParser } = require("@langchain/core/output_parsers");
+
+    return RunnableSequence.from([prompt, llm, new StringOutputParser()]);
   }
 }
 
