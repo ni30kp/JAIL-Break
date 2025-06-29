@@ -30,6 +30,10 @@ const { runEvaluation } = require("./eval");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const LLM_PROVIDER = process.env.LLM_PROVIDER || "openai";
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "mistral:latest";
+const DEBUG_MODE = process.env.DEBUG === "true";
 
 // Middleware
 app.use(cors());
@@ -37,9 +41,6 @@ app.use(express.json());
 app.use(express.static("uploads"));
 
 // Configuration
-const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "mistral:latest";
-const LLM_PROVIDER = process.env.LLM_PROVIDER || "ollama"; // 'ollama' or 'openai'
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const DB_DOCUMENTS_PATH = `./db_documents_${OLLAMA_MODEL.replace(
   /[^a-zA-Z0-9]/g,
@@ -156,10 +157,9 @@ class RAGService {
         DB_TRANSCRIPTIONS_PATH
       );
 
-      console.log("HNSWLib vector stores initialized/loaded");
       await this.setupChain();
       this.ready = true;
-      console.log("RAGService is ready for processing");
+      console.log("RAG Service ready");
     } catch (error) {
       console.error("Error initializing vector stores:", error);
     }
@@ -168,7 +168,6 @@ class RAGService {
   async setupChain() {
     const retriever = this.getRetriever();
     if (!retriever) {
-      console.log("No retrievers available to set up chain.");
       return;
     }
 
@@ -204,8 +203,6 @@ Answer:
       retriever,
       combineDocsChain,
     });
-
-    console.log("Retrieval chain successfully set up.");
   }
 
   async loadOrCreateStore(dbPath) {
@@ -288,21 +285,16 @@ Answer:
         );
       }
 
-      console.log(`Starting document processing for ${documentId}`);
-
       const fileContent = await this.extractTextFromFile(
         filePath,
         metadata.mimeType
       );
-
-      console.log(`Extracted ${fileContent.length} characters from file`);
 
       if (!embeddings) {
         throw new Error("Embeddings not initialized");
       }
 
       const chunks = await textSplitter.splitText(fileContent);
-      console.log(`Split document into ${chunks.length} chunks`);
 
       const storeType =
         metadata.type === "transcription" ? "transcriptions" : "documents";
@@ -321,16 +313,10 @@ Answer:
         },
       }));
 
-      console.log(
-        `Preparing to add ${documentsWithMetadata.length} documents to ${storeType} store`
-      );
-
       if (this.vectorStores[storeType]) {
         await this.vectorStores[storeType].addDocuments(documentsWithMetadata);
-        console.log(`Added documents to existing ${storeType} store`);
       } else {
         // Create a new store if it's the first upload
-        console.log(`Creating new ${storeType} store`);
         this.vectorStores[storeType] = await HNSWLib.fromDocuments(
           documentsWithMetadata,
           embeddings
@@ -340,9 +326,7 @@ Answer:
       await this.vectorStores[storeType].save(dbPath);
       await this.setupChain(); // Re-initialize the chain with the new data
 
-      console.log(
-        `Added ${chunks.length} chunks for ${documentId} to ${dbPath}`
-      );
+      console.log(`Added document: ${documentId} (${chunks.length} chunks)`);
       return { success: true, chunks: chunks.length };
     } catch (error) {
       console.error("Error uploading document:", error);
@@ -351,13 +335,12 @@ Answer:
   }
 
   async query(question) {
-    console.log(`Invoking multi-hop RAG chain for query: ${question}`);
+    if (DEBUG_MODE) console.log(`Processing query: ${question}`);
 
     try {
       const result = await this.multiHopQuery(question);
-      console.log(
-        `Multi-hop query completed successfully using ${result.provider}`
-      );
+
+      if (DEBUG_MODE) console.log(`Query completed using ${result.provider}`);
 
       return {
         answer: result.answer,
@@ -366,37 +349,37 @@ Answer:
         hops: result.hops || [],
       };
     } catch (error) {
-      console.error("Error in multi-hop RAG query:", error);
+      console.error("Error in RAG query:", error);
       throw error;
     }
   }
 
   async multiHopQuery(question) {
-    console.log("=== Starting Multi-Hop RAG Process ===");
+    if (DEBUG_MODE) console.log("=== Starting Multi-Hop RAG Process ===");
 
-    // First hop: Initial retrieval from both documents and transcripts (reduced to k=15 to avoid context length issues)
-    console.log("🔄 HOP 1: Initial retrieval");
+    // First hop: Initial retrieval
+    if (DEBUG_MODE) console.log("🔄 HOP 1: Initial retrieval");
     const initialResults = await this.performRetrieval(question, 15);
-    console.log(`Retrieved ${initialResults.length} initial documents`);
+    if (DEBUG_MODE)
+      console.log(`Retrieved ${initialResults.length} initial documents`);
 
-    // Generate follow-up questions based on initial results (increased to 8 questions)
-    console.log("🔄 Generating follow-up questions");
+    // Generate follow-up questions based on initial results
+    if (DEBUG_MODE) console.log("🔄 Generating follow-up questions");
     const followUpQuestions = await this.generateFollowUpQuestions(
       question,
       initialResults
     );
-    console.log(
-      `Generated ${followUpQuestions.length} follow-up questions:`,
-      followUpQuestions
-    );
+    if (DEBUG_MODE)
+      console.log(`Generated ${followUpQuestions.length} follow-up questions`);
 
-    // Second hop: Retrieve additional information using follow-up questions (increased to k=8 per question)
-    console.log("🔄 HOP 2: Follow-up retrieval");
+    // Second hop: Retrieve additional information using follow-up questions
+    if (DEBUG_MODE) console.log("🔄 HOP 2: Follow-up retrieval");
     const additionalResults = [];
     for (const followUp of followUpQuestions) {
       const results = await this.performRetrieval(followUp, 8);
       additionalResults.push(...results);
-      console.log(`Retrieved ${results.length} documents for: "${followUp}"`);
+      if (DEBUG_MODE)
+        console.log(`Retrieved ${results.length} documents for: "${followUp}"`);
     }
 
     // Combine all results and remove duplicates
@@ -404,32 +387,24 @@ Answer:
       ...initialResults,
       ...additionalResults,
     ]);
-    console.log(`Total unique documents after multi-hop: ${allResults.length}`);
+    if (DEBUG_MODE)
+      console.log(
+        `Total unique documents after multi-hop: ${allResults.length}`
+      );
 
     // Generate final answer using all retrieved information
-    console.log("🔄 Generating final answer");
+    if (DEBUG_MODE) console.log("🔄 Generating final answer");
     const finalAnswer = await this.generateFinalAnswer(question, allResults);
 
-    console.log("=== Multi-Hop RAG Process Complete ===");
+    if (DEBUG_MODE) console.log("=== Multi-Hop RAG Process Complete ===");
 
-    return {
-      answer: finalAnswer.answer,
-      sources: allResults.map((doc) => doc.metadata),
-      provider: finalAnswer.provider,
-      hops: [
-        { hop: 1, query: question, results: initialResults.length },
-        {
-          hop: 2,
-          queries: followUpQuestions,
-          results: additionalResults.length,
-        },
-      ],
-    };
+    return finalAnswer;
   }
 
   async performRetrieval(query, k = 6) {
     try {
-      console.log(`Performing retrieval for query: "${query}" with k=${k}`);
+      if (DEBUG_MODE)
+        console.log(`Performing retrieval for query: "${query}" with k=${k}`);
 
       // Create retrievers with the specific k value for this query
       const docRetriever = this.vectorStores.documents
@@ -460,16 +435,20 @@ Answer:
           weights: [0.6, 0.4],
         });
         results = await ensembleRetriever.getRelevantDocuments(query);
-        console.log(`Ensemble retriever returned ${results.length} documents`);
+        if (DEBUG_MODE)
+          console.log(
+            `Ensemble retriever returned ${results.length} documents`
+          );
       } else {
         // Use single retriever
         results = await validRetrievers[0].getRelevantDocuments(query);
-        console.log(`Single retriever returned ${results.length} documents`);
+        if (DEBUG_MODE)
+          console.log(`Single retriever returned ${results.length} documents`);
       }
 
       return results.slice(0, k);
     } catch (error) {
-      console.error(`Error in retrieval for query "${query}":`, error);
+      console.error(`Retrieval error: ${error.message}`);
       return [];
     }
   }
@@ -501,9 +480,6 @@ Answer:
       totalChars += truncatedContent.length;
     }
 
-    console.log(
-      `Truncated ${documents.length} documents to ${truncatedDocs.length} documents (${totalChars} chars)`
-    );
     return truncatedDocs;
   }
 
@@ -650,22 +626,14 @@ Provide a comprehensive answer that directly addresses the question using the in
   async invokeWithFallback(input) {
     try {
       // Try primary provider first
-      console.log(`Attempting with primary provider: ${this.primaryProvider}`);
       const result = await this.chain.invoke(input);
       return { result, provider: this.primaryProvider };
     } catch (error) {
-      console.log(
-        `Primary provider (${this.primaryProvider}) failed:`,
-        error.message
-      );
-
       // Fallback to the other provider
       const fallbackProvider =
         this.primaryProvider === "openai" ? "ollama" : "openai";
       const fallbackLLM =
         this.primaryProvider === "openai" ? this.ollamaLLM : this.openaiLLM;
-
-      console.log(`Falling back to: ${fallbackProvider}`);
 
       try {
         // Recreate chain with fallback LLM
@@ -673,10 +641,6 @@ Provide a comprehensive answer that directly addresses the question using the in
         const result = await fallbackChain.invoke(input);
         return { result, provider: fallbackProvider };
       } catch (fallbackError) {
-        console.log(
-          `Fallback provider (${fallbackProvider}) also failed:`,
-          fallbackError.message
-        );
         throw new Error(
           `Both providers failed. Primary: ${error.message}, Fallback: ${fallbackError.message}`
         );
@@ -781,8 +745,6 @@ app.post("/api/query", async (req, res) => {
       return res.status(400).json({ error: "Question is required" });
     }
 
-    console.log("Processing query:", question);
-
     // Perform RAG query
     const result = await ragService.query(question);
 
@@ -795,9 +757,7 @@ app.post("/api/query", async (req, res) => {
 
 app.get("/api/evaluate", async (req, res) => {
   try {
-    console.log("Starting evaluation...");
     const results = await runEvaluation(ragService);
-    console.log("Evaluation finished.");
     res.json(results);
   } catch (error) {
     console.error("Evaluation error:", error);
