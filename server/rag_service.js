@@ -25,12 +25,11 @@ class RAGService {
       return;
     }
 
-    console.log("Initializing RAG Service...");
     await this.initializeLLM();
     await this.initializeVectorStores();
     await this.setupChain();
     this.isInitialized = true;
-    console.log("RAGService is ready for processing");
+    console.log("RAG Service initialized");
   }
 
   initializeLLM() {
@@ -39,24 +38,18 @@ class RAGService {
       process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 
     if (openaiApiKey) {
-      console.log("Using openai as primary LLM provider.");
       this.llm = new ChatOpenAI({
         openAIApiKey: openaiApiKey,
         modelName: "gpt-4o",
         temperature: 0.1,
         maxTokens: 2000,
       });
-      console.log("OpenAI Model: gpt-4o");
     } else {
-      console.log(
-        "OpenAI API key not found, using Ollama as primary LLM provider."
-      );
       this.llm = new Ollama({
         baseUrl: ollamaBaseUrl,
         model: "mistral:latest",
         temperature: 0.1,
       });
-      console.log("Ollama Model: mistral:latest");
     }
 
     // Initialize embeddings with the same model
@@ -74,39 +67,33 @@ class RAGService {
   }
 
   async initializeVectorStores() {
-    const documentsPath = "./db_documents_mistral_latest";
-    const transcriptionsPath = "./db_transcriptions_mistral_latest";
+    const documentsPath = path.join(__dirname, "db_documents");
+    const transcriptionsPath = path.join(__dirname, "db_transcriptions");
 
     try {
-      // Load or create document vector store
-      if (fs.existsSync(documentsPath)) {
-        console.log(`Loading existing vector store from ${documentsPath}`);
-        this.vectorStores.documents = await HNSWLib.load(
-          documentsPath,
-          this.embeddings
-        );
-      }
-
-      // Load or create transcription vector store
-      if (fs.existsSync(transcriptionsPath)) {
-        console.log(`Loading existing vector store from ${transcriptionsPath}`);
-        this.vectorStores.transcriptions = await HNSWLib.load(
-          transcriptionsPath,
-          this.embeddings
-        );
-      }
-
-      console.log("HNSWLib vector stores initialized/loaded");
+      // Load documents vector store
+      this.vectorStores.documents = await HNSWLib.load(
+        documentsPath,
+        this.embeddings
+      );
     } catch (error) {
-      console.error("Error initializing vector stores:", error);
-      throw error;
+      // Vector store doesn't exist yet, it will be created when documents are added
+    }
+
+    try {
+      // Load transcriptions vector store
+      this.vectorStores.transcriptions = await HNSWLib.load(
+        transcriptionsPath,
+        this.embeddings
+      );
+    } catch (error) {
+      // Vector store doesn't exist yet, it will be created when documents are added
     }
   }
 
   async setupChain() {
     try {
       this.retrievalChain = await this.createChain(this.llm);
-      console.log("Retrieval chain successfully set up.");
     } catch (error) {
       console.error("Error setting up retrieval chain:", error);
       throw error;
@@ -208,14 +195,8 @@ class RAGService {
   }
 
   async query(question) {
-    console.log(`Invoking multi-hop RAG chain for query: ${question}`);
-
     try {
       const result = await this.multiHopQuery(question);
-      console.log(
-        `Multi-hop query completed successfully using ${result.provider}`
-      );
-
       return {
         answer: result.answer,
         sources: result.sources || [],
@@ -223,37 +204,26 @@ class RAGService {
         hops: result.hops || [],
       };
     } catch (error) {
-      console.error("Error in multi-hop RAG query:", error);
+      console.error("Error in RAG query:", error);
       throw error;
     }
   }
 
   async multiHopQuery(question) {
-    console.log("=== Starting Multi-Hop RAG Process ===");
-
-    // First hop: Initial retrieval from both documents and transcripts (reduced to k=15 to avoid context length issues)
-    console.log("🔄 HOP 1: Initial retrieval");
+    // First hop: Initial retrieval
     const initialResults = await this.performRetrieval(question, 15);
-    console.log(`Retrieved ${initialResults.length} initial documents`);
 
-    // Generate follow-up questions based on initial results (increased to 8 questions)
-    console.log("🔄 Generating follow-up questions");
+    // Generate follow-up questions based on initial results
     const followUpQuestions = await this.generateFollowUpQuestions(
       question,
       initialResults
     );
-    console.log(
-      `Generated ${followUpQuestions.length} follow-up questions:`,
-      followUpQuestions
-    );
 
-    // Second hop: Retrieve additional information using follow-up questions (increased to k=8 per question)
-    console.log("🔄 HOP 2: Follow-up retrieval");
+    // Second hop: Retrieve additional information using follow-up questions
     const additionalResults = [];
     for (const followUp of followUpQuestions) {
       const results = await this.performRetrieval(followUp, 8);
       additionalResults.push(...results);
-      console.log(`Retrieved ${results.length} documents for: "${followUp}"`);
     }
 
     // Combine all results and remove duplicates
@@ -261,33 +231,15 @@ class RAGService {
       ...initialResults,
       ...additionalResults,
     ]);
-    console.log(`Total unique documents after multi-hop: ${allResults.length}`);
 
     // Generate final answer using all retrieved information
-    console.log("🔄 Generating final answer");
     const finalAnswer = await this.generateFinalAnswer(question, allResults);
 
-    console.log("=== Multi-Hop RAG Process Complete ===");
-
-    return {
-      answer: finalAnswer.answer,
-      sources: allResults.map((doc) => doc.metadata),
-      provider: finalAnswer.provider,
-      hops: [
-        { hop: 1, query: question, results: initialResults.length },
-        {
-          hop: 2,
-          queries: followUpQuestions,
-          results: additionalResults.length,
-        },
-      ],
-    };
+    return finalAnswer;
   }
 
   async performRetrieval(query, k = 6) {
     try {
-      console.log(`Performing retrieval for query: "${query}" with k=${k}`);
-
       // Create retrievers with the specific k value for this query
       const docRetriever = this.vectorStores.documents
         ? this.vectorStores.documents.asRetriever({
@@ -317,11 +269,9 @@ class RAGService {
           weights: [0.6, 0.4],
         });
         results = await ensembleRetriever.getRelevantDocuments(query);
-        console.log(`Ensemble retriever returned ${results.length} documents`);
       } else {
         // Use single retriever
         results = await validRetrievers[0].getRelevantDocuments(query);
-        console.log(`Single retriever returned ${results.length} documents`);
       }
 
       return results.slice(0, k);
@@ -358,9 +308,6 @@ class RAGService {
       totalChars += truncatedContent.length;
     }
 
-    console.log(
-      `Truncated ${documents.length} documents to ${truncatedDocs.length} documents (${totalChars} chars)`
-    );
     return truncatedDocs;
   }
 
@@ -504,38 +451,13 @@ Provide a comprehensive answer that directly addresses the question using the in
     const ollamaBaseUrl =
       process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 
-    // Try primary provider (OpenAI if available, otherwise Ollama)
     try {
-      if (openaiApiKey) {
-        const openaiLLM = new ChatOpenAI({
-          openAIApiKey: openaiApiKey,
-          modelName: "gpt-4o",
-          temperature: 0.1,
-          maxTokens: 2000,
-        });
-        const chain = await this.createChain(openaiLLM);
-        const result = await chain.invoke(input);
-        return { result, provider: "openai" };
-      } else {
-        const ollamaLLM = new Ollama({
-          baseUrl: ollamaBaseUrl,
-          model: "mistral:latest",
-          temperature: 0.1,
-        });
-        const chain = await this.createChain(ollamaLLM);
-        const result = await chain.invoke(input);
-        return { result, provider: "ollama" };
-      }
+      // Try primary provider first
+      const result = await this.retrievalChain.invoke(input);
+      return { result, provider: openaiApiKey ? "openai" : "ollama" };
     } catch (primaryError) {
-      console.log(
-        `Primary provider (${openaiApiKey ? "openai" : "ollama"}) failed: ${
-          primaryError.message
-        }`
-      );
-
       // Try fallback provider
       try {
-        console.log(`Falling back to: ${openaiApiKey ? "ollama" : "openai"}`);
         const fallbackLLM = openaiApiKey
           ? new Ollama({
               baseUrl: ollamaBaseUrl,
@@ -553,11 +475,6 @@ Provide a comprehensive answer that directly addresses the question using the in
         const result = await chain.invoke(input);
         return { result, provider: openaiApiKey ? "ollama" : "openai" };
       } catch (fallbackError) {
-        console.log(
-          `Fallback provider (${
-            openaiApiKey ? "ollama" : "openai"
-          }) also failed: ${fallbackError.message}`
-        );
         throw new Error(
           `Both providers failed. Primary: ${primaryError.message}, Fallback: ${fallbackError.message}`
         );
